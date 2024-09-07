@@ -93,7 +93,7 @@ await getBorrowBooks()
 
     <div class="space-x-2 mt-4 justify-end text-end">
       <span><nuxt-link to="/borrow" class="btn btn-primary w-30">ยืม-คืนหนังสือ</nuxt-link></span>
-      <span><nuxt-link to="/data" class="btn btn-primary w-30">ข้อมูลสถิติ</nuxt-link></span>
+      <span><nuxt-link to="/datapage" class="btn btn-primary w-30">ข้อมูลสถิติ</nuxt-link></span>
     </div>
 
     <div class="overflow-x-auto mt-6">
@@ -123,4 +123,4 @@ await getBorrowBooks()
   </div>
 </template>
 
-<style scoped></style>``
+<style scoped></style>

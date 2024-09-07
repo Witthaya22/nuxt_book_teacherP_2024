@@ -12,9 +12,10 @@ interface Book {
   b_name: string;
 }
 
-const memberUsername = ref('');
+const memberName = ref('');
 const bookId = ref('');
 const borrowInfo = reactive({
+  memberUsername: '',
   memberName: '',
   bookId: '',
   bookName: '',
@@ -25,11 +26,22 @@ const successMessage = ref('');
 
 async function searchMember() {
   try {
-    const response = await axios.get<Member>(`http://localhost:3001/members/${memberUsername.value}`);
-    borrowInfo.memberName = response.data.m_name;
+    const response = await axios.get<Member[]>(`http://localhost:3001/members?name=${memberName.value}`);
+    if (response.data.length > 0) {
+      borrowInfo.memberUsername = response.data[0].m_user;
+      borrowInfo.memberName = response.data[0].m_name;
+    } else {
+      // If member not found, create a new one
+      const newMember = await axios.post<Member>('http://localhost:3001/members', {
+        m_name: memberName.value
+      });
+      borrowInfo.memberUsername = newMember.data.m_user;
+      borrowInfo.memberName = newMember.data.m_name;
+    }
     errorMessage.value = '';
   } catch (error) {
-    errorMessage.value = 'ไม่พบข้อมูลสมาชิก';
+    errorMessage.value = 'เกิดข้อผิดพลาดในการค้นหาหรือสร้างสมาชิก';
+    borrowInfo.memberUsername = '';
     borrowInfo.memberName = '';
   }
 }
@@ -41,24 +53,21 @@ async function searchBook() {
     borrowInfo.bookName = response.data.b_name;
     errorMessage.value = '';
   } catch (error) {
-    errorMessage.value = 'ไม่พบข้อมูลหนังสือ';
+    errorMessage.value = 'ไม่พบข้อมูลหนังสือ กรุณาตรวจสอบรหัสหนังสือ';
     borrowInfo.bookId = '';
     borrowInfo.bookName = '';
   }
 }
 
 async function borrowBook() {
-  if (!borrowInfo.memberName || !borrowInfo.bookId) {
+  if (!borrowInfo.memberUsername || !borrowInfo.bookId) {
     errorMessage.value = 'กรุณากรอกข้อมูลให้ครบถ้วน';
     return;
   }
   try {
     await axios.post('http://localhost:3001/borrows', {
-      m_user: memberUsername.value,
+      m_user: borrowInfo.memberUsername,
       b_id: borrowInfo.bookId,
-      br_date_br: new Date().toISOString(),
-      br_date_rt: '0000-00-00',
-      br_fine: 0
     });
     successMessage.value = 'ยืมหนังสือสำเร็จ';
     resetForm();
@@ -68,12 +77,14 @@ async function borrowBook() {
 }
 
 function resetForm() {
-  memberUsername.value = '';
+  memberName.value = '';
   bookId.value = '';
+  borrowInfo.memberUsername = '';
   borrowInfo.memberName = '';
   borrowInfo.bookId = '';
   borrowInfo.bookName = '';
   errorMessage.value = '';
+  successMessage.value = '';
 }
 
 function cancelBorrow() {
@@ -95,7 +106,7 @@ function cancelBorrow() {
     <div class="max-w-2xl mx-auto space-y-6">
       <div class="flex items-center space-x-4">
         <label class="w-48 text-right">ผู้ที่ต้องการยืมหนังสือ:</label>
-        <input v-model="memberUsername" placeholder="กรอกชื่อ ID ผู้ใช้" class="input input-bordered flex-grow" type="text">
+        <input v-model="memberName" placeholder="กรอกชื่อ ID ผู้ใช้" class="input input-bordered flex-grow" type="text">
         <button @click="searchMember" class="btn btn-primary">ตกลง</button>
       </div>
 
